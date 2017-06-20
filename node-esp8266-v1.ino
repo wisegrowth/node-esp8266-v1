@@ -1,21 +1,30 @@
+/**
+* @module Node ESP8266 V1
+* @description Node based on the module esp8266 that only has one relay as actuator.
+* The implementation is designed to be used with the wisegrowth/wisebot-core
+* @author Camilo Acuña Godoy
+*/
+
+#include <ArduinoJson.h>
+
 #include "env.h"
-#include "talkative.h"
+#include "libs/talkative.h"
 
 const int RELAY_PIN = 2;
 bool relay_state = true;
 
-Talkative talker;
+TalkativeParams params = {WIFI_SSID, WIFI_PASSWORD, AWS_ENDPOINT, AWS_KEY, AWS_SECRET, AWS_REGION, PORT};
+Talkative talker = Talkative(params);
 
 void peripheralCallback (MQTT::MessageData& md) {
   MQTT::Message &message = md.message;
 
   char* msg = new char[message.payloadlen + 1]();
-  memcpy(msg,message.payload,message.payloadlen);
+  memcpy(msg,message.payload, message.payloadlen);
 
   StaticJsonBuffer<30> reqJsonBuffer;
   JsonObject& reqRoot = reqJsonBuffer.parseObject(msg);
   const char* type = reqRoot["type"];
-  Serial.println(type);
   delete msg;
 
   //TODO: add validation if has valid attributes {type}
@@ -44,15 +53,17 @@ void peripheralCallback (MQTT::MessageData& md) {
   char buf[100];
   resRoot.printTo(buf, 100);
 
-  char topic[39] = "/devices/";
+  //TODO: check below and fix param in subscribe talker method
+  char topic[40] = "/devices/";
   strcat(topic, DEVICE_ID);
   strcat(topic, "/peripheral:response");
 
-  talker.publish(topic, buf);
+  talker.publish("/devices/0000000001/peripheral:response", buf);
 }
 
 void subscriber () {
-  char topic[30] = "/devices/";
+  //TODO: check below and fix param in subscribe talker method
+  char topic[31] = "/devices/";
   strcat(topic, DEVICE_ID);
   strcat(topic, "/peripheral");
 
@@ -67,17 +78,6 @@ void setup() {
     pinMode(RELAY_PIN, OUTPUT);
     digitalWrite(RELAY_PIN, HIGH);
 
-    talkativeParams params = {
-      WIFI_SSID,
-      WIFI_PASSWORD,
-      AWS_ENDPOINT,
-      AWS_KEY,
-      AWS_SECRET,
-      AWS_REGION,
-      PORT
-    };
-
-    talker = Talkative(params);
     talker.setup();
     if (talker.connectMQTT()){
       subscriber();
