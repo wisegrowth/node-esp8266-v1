@@ -2,6 +2,7 @@
 * @module Node ESP8266 V1
 * @description Node based on the module esp8266 that only has one relay as actuator.
 * The implementation is designed to be used with the wisegrowth/wisebot-core
+* @see https://github.com/wisegrowth/wisebot-core/pull/41/files
 * @author Camilo Acuña Godoy
 */
 
